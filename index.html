@@ -630,11 +630,14 @@
 
   .camera-card {
     overflow: hidden;
+    cursor: pointer;
   }
 
   .camera-card:first-child {
     border-right: 1px solid var(--gray-100);
   }
+
+  .camera-card:hover .camera-img { opacity: 0.88; }
 
   .camera-label {
     padding: 0.3rem 0.6rem;
@@ -652,9 +655,48 @@
     aspect-ratio: 4/3;
     object-fit: cover;
     background: var(--gray-100);
+    transition: opacity 0.15s;
   }
 
   .camera-img.error { opacity: 0.3; }
+
+  /* ── Camera overlay ── */
+  #cam-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 400;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 1rem;
+  }
+  #cam-overlay.open { display: flex; }
+
+  #cam-overlay-img {
+    max-width: 100%;
+    max-height: 82vh;
+    object-fit: contain;
+    border-radius: var(--radius);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  }
+
+  #cam-overlay-label {
+    color: rgba(255,255,255,0.8);
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  #cam-overlay-hint {
+    color: rgba(255,255,255,0.4);
+    margin-top: 0.35rem;
+    font-size: 0.75rem;
+  }
 
   /* ── Responsive tweaks ── */
   @media (max-width: 400px) {
@@ -767,6 +809,13 @@
     </div>
   </div>
 </main>
+
+<!-- Camera overlay -->
+<div id="cam-overlay" onclick="closeCamOverlay()">
+  <img id="cam-overlay-img" src="" alt="">
+  <div id="cam-overlay-label"></div>
+  <div id="cam-overlay-hint">Tap anywhere to close</div>
+</div>
 
 <!-- Route picker overlay -->
 <div id="picker-overlay" onclick="overlayClick(event)">
@@ -1260,8 +1309,9 @@ function camerasHTML(code) {
   return [1, 2].map(n => {
     const url   = `${CAM_BASE}cam${n}_${code}.jpg?t=${t}`;
     const label = `${termName(code)} — Cam ${n}`;
+    const baseUrl = `${CAM_BASE}cam${n}_${code}.jpg`;
     return `
-      <div class="camera-card" id="cam-${code}-${n}">
+      <div class="camera-card" id="cam-${code}-${n}" onclick="openCamOverlay('${baseUrl}','${label}')">
         <div class="camera-label">${label}</div>
         <img class="camera-img"
              src="${url}"
@@ -1310,6 +1360,24 @@ function scaleTracker() {
 }
 
 window.addEventListener('resize', scaleTracker);
+
+// ─────────────────────────────────────────────
+// Camera overlay
+// ─────────────────────────────────────────────
+function openCamOverlay(baseUrl, label) {
+  document.getElementById('cam-overlay-img').src = baseUrl + '?t=' + Date.now();
+  document.getElementById('cam-overlay-label').textContent = label;
+  document.getElementById('cam-overlay').classList.add('open');
+}
+
+function closeCamOverlay() {
+  document.getElementById('cam-overlay').classList.remove('open');
+  document.getElementById('cam-overlay-img').src = '';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeCamOverlay();
+});
 
 // ─────────────────────────────────────────────
 // Start
