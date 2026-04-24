@@ -401,12 +401,54 @@
   .badge-future  { background: var(--gray-100); color: var(--gray-500); }
   .badge-past    { background: var(--gray-100); color: var(--gray-400); }
 
-  /* ── Capacity bars ── */
+  /* ── Capacity section ── */
+  .sailing-capacity { margin-top: 0.4rem; }
+
+  /* Available — full-width prominent row */
+  .avail-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .avail-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    width: 4.5rem;
+  }
+
+  .avail-pct {
+    font-size: 1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    width: 3rem;
+    text-align: right;
+  }
+
+  .avail-bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--gray-100);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .avail-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  /* Car / Oversize — smaller 2-column sub-row */
   .capacity-bars {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 0.4rem;
-    margin-top: 0.35rem;
   }
 
   .cap-item { display: flex; flex-direction: column; gap: 2px; }
@@ -939,10 +981,12 @@ function sailingHTML(s) {
   let barsHTML = '';
   if (showBars) {
     barsHTML = `
-      <div class="capacity-bars">
+      <div class="sailing-capacity">
         ${capBarAvail(s.fill)}
-        ${capBar('Car', s.carFill)}
-        ${capBar('Oversize', s.oversizeFill)}
+        <div class="capacity-bars">
+          ${capBar('Car', s.carFill)}
+          ${capBar('Oversize', s.oversizeFill)}
+        </div>
       </div>`;
   }
 
@@ -961,21 +1005,19 @@ function capBarAvail(fillPct) {
   const fill = parseInt(fillPct) || 0;
   const avail = 100 - fill;
   const hasData = fill > 0;
-  let colorClass = 'fill-low';
-  if (avail < 10) colorClass = 'fill-full';
-  else if (avail < 30) colorClass = 'fill-high';
-  else if (avail < 55) colorClass = 'fill-mid';
+  let color = 'var(--green)';
+  if (avail < 10) color = 'var(--red)';
+  else if (avail < 30) color = '#d06030';
+  else if (avail < 55) color = 'var(--amber)';
   const displayPct = hasData ? avail + '%' : '—';
   const barWidth   = hasData ? avail : 0;
   return `
-    <div class="cap-item">
-      <div class="cap-label">
-        <span>Available</span>
-        <span class="cap-pct">${displayPct}</span>
+    <div class="avail-row">
+      <span class="avail-label">Available</span>
+      <div class="avail-bar-track">
+        <div class="avail-bar-fill" style="width:${barWidth}%; background:${color}"></div>
       </div>
-      <div class="cap-bar-track">
-        <div class="cap-bar-fill ${colorClass}" style="width:${barWidth}%"></div>
-      </div>
+      <span class="avail-pct" style="color:${color}">${displayPct}</span>
     </div>`;
 }
 
