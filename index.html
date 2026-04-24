@@ -340,10 +340,14 @@
   }
   .sailing-row:last-child { border-bottom: none; }
 
-  /* Past sailings — compact, clearly historical */
+  /* Compact layout used for both past and on-route sailings */
+  .sailing-row.compact {
+    padding: 0.4rem 1rem;
+  }
+
+  /* Past sailings — grey background */
   .sailing-row.past {
     background: var(--gray-50);
-    padding: 0.4rem 1rem;
   }
 
   .past-info {
@@ -1097,7 +1101,7 @@ function pastSailingHTML(s) {
   }
 
   return `
-    <div class="sailing-row past${isCurrent ? ' current' : ''}">
+    <div class="sailing-row compact ${isCurrent ? 'current' : 'past'}">
       <div class="past-info">
         <span class="past-time">${timeStr}</span>
         <span class="past-vessel">${vessel}</span>
