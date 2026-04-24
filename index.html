@@ -340,8 +340,54 @@
   }
   .sailing-row:last-child { border-bottom: none; }
 
+  /* Past sailings — compact, clearly historical */
   .sailing-row.past {
-    opacity: 0.4;
+    background: var(--gray-50);
+    padding: 0.4rem 1rem;
+  }
+
+  .past-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .past-time {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .past-vessel {
+    font-size: 0.8rem;
+    color: var(--gray-400);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .past-fill {
+    font-size: 0.75rem;
+    color: var(--gray-400);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .past-status-badge {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    background: var(--gray-100);
+    color: var(--gray-500);
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .sailing-row.current {
@@ -968,37 +1014,52 @@ function renderDirection(dir, route) {
 }
 
 function sailingHTML(s) {
-  const hasFill = s.cls !== 'past' && (s.fill > 0 || s.carFill > 0 || s.oversizeFill > 0);
-  const showBars = s.cls !== 'past';
+  if (s.cls === 'past') return pastSailingHTML(s);
 
   let badgeHTML = '';
   if (s.badge === 'current') badgeHTML = '<span class="sailing-status-badge badge-current">On route</span>';
   else if (s.badge === 'next') badgeHTML = '<span class="sailing-status-badge badge-next">Next</span>';
 
-  let arrHTML = s.arrivalTime ? ` → ${s.arrivalTime}` : '';
-  let vesselHTML = s.vesselName ? `<span class="sailing-vessel">${s.vesselName}</span>` : '';
+  const arrHTML    = s.arrivalTime ? `<span class="sailing-arr"> → ${s.arrivalTime}</span>` : '';
+  const vesselHTML = s.vesselName  ? `<span class="sailing-vessel">${s.vesselName}</span>`  : '';
 
-  let barsHTML = '';
-  if (showBars) {
-    barsHTML = `
-      <div class="sailing-capacity">
-        ${capBarAvail(s.fill)}
-        <div class="capacity-bars">
-          ${capBar('Fill', s.fill)}
-          ${capBar('Car', s.carFill)}
-          ${capBar('Oversize', s.oversizeFill)}
-        </div>
-      </div>`;
-  }
+  const barsHTML = `
+    <div class="sailing-capacity">
+      ${capBarAvail(s.fill)}
+      <div class="capacity-bars">
+        ${capBar('Fill', s.fill)}
+        ${capBar('Car', s.carFill)}
+        ${capBar('Oversize', s.oversizeFill)}
+      </div>
+    </div>`;
 
   return `
     <div class="sailing-row ${s.cls}">
       <div class="sailing-top">
-        <span class="sailing-time">${s.time}${arrHTML ? '<span class="sailing-arr">' + arrHTML + '</span>' : ''}</span>
+        <span class="sailing-time">${s.time}${arrHTML}</span>
         ${badgeHTML}
         ${vesselHTML}
       </div>
       ${barsHTML}
+    </div>`;
+}
+
+function pastSailingHTML(s) {
+  const timeStr   = s.arrivalTime ? `${s.time} → ${s.arrivalTime}` : s.time;
+  const vessel    = s.vesselName || '—';
+  const fillPct   = parseInt(s.fill) || 0;
+  const fillStr   = fillPct > 0 ? `Fill ${fillPct}%` : 'Fill —';
+  const statusHTML = s.vesselStatus
+    ? `<span class="past-status-badge">${s.vesselStatus}</span>` : '';
+
+  return `
+    <div class="sailing-row past">
+      <div class="past-info">
+        <span class="past-time">${timeStr}</span>
+        <span class="past-vessel">${vessel}</span>
+        <span class="past-fill">${fillStr}</span>
+        ${statusHTML}
+      </div>
     </div>`;
 }
 
