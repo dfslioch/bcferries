@@ -404,16 +404,44 @@
   /* ── Capacity section ── */
   .sailing-capacity { margin-top: 0.4rem; }
 
-  /* Available pill */
-  .avail-pill-row { margin-bottom: 0.35rem; }
+  /* Available — bar + pill */
+  .avail-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .avail-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+  }
+
+  .avail-bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--gray-100);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .avail-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
 
   .avail-pill {
     display: inline-block;
-    padding: 0.2rem 0.65rem;
+    padding: 0.15rem 0.5rem;
     border-radius: 999px;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 700;
-    letter-spacing: 0.01em;
+    flex-shrink: 0;
   }
 
   /* Fill / Car / Oversize — 3-column bar row */
@@ -978,14 +1006,22 @@ function capBarAvail(fillPct) {
   const fill = parseInt(fillPct) || 0;
   const avail = 100 - fill;
   const hasData = fill > 0;
-  let bg, fg;
-  if (!hasData)      { bg = 'var(--gray-100)';        fg = 'var(--gray-500)'; }
-  else if (avail < 10) { bg = 'var(--red-light)';     fg = 'var(--red)'; }
-  else if (avail < 30) { bg = '#fce8d8';               fg = '#d06030'; }
-  else if (avail < 55) { bg = 'var(--amber-light)';   fg = 'var(--amber)'; }
-  else                 { bg = 'var(--green-light)';    fg = 'var(--green)'; }
-  const label = hasData ? avail + '% Available' : '— Available';
-  return `<div class="avail-pill-row"><span class="avail-pill" style="background:${bg};color:${fg}">${label}</span></div>`;
+  let barColor, pillBg, pillFg;
+  if (!hasData)        { barColor = 'var(--gray-300)'; pillBg = 'var(--gray-100)'; pillFg = 'var(--gray-500)'; }
+  else if (avail < 10) { barColor = 'var(--red)';      pillBg = 'var(--red-light)'; pillFg = 'var(--red)'; }
+  else if (avail < 30) { barColor = '#d06030';          pillBg = '#fce8d8';          pillFg = '#d06030'; }
+  else if (avail < 55) { barColor = 'var(--amber)';    pillBg = 'var(--amber-light)'; pillFg = 'var(--amber)'; }
+  else                 { barColor = 'var(--green)';    pillBg = 'var(--green-light)'; pillFg = 'var(--green)'; }
+  const pillLabel = hasData ? avail + '%' : '—';
+  const barWidth  = hasData ? avail : 0;
+  return `
+    <div class="avail-row">
+      <span class="avail-label">Available</span>
+      <div class="avail-bar-track">
+        <div class="avail-bar-fill" style="width:${barWidth}%; background:${barColor}"></div>
+      </div>
+      <span class="avail-pill" style="background:${pillBg}; color:${pillFg}">${pillLabel}</span>
+    </div>`;
 }
 
 function capBar(label, pct) {
