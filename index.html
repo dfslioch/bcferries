@@ -944,28 +944,30 @@ function renderRoute() {
   document.getElementById('tab-out-label').textContent = termName(currentFrom);
   document.getElementById('tab-in-label').textContent  = termName(currentTo);
 
-  // Build sets of vessel names confirmed departed/arrived on each leg
-  // (current or past on the opposite direction = vessel has crossed)
-  function departedVessels(route) {
-    if (!route) return new Set();
-    return new Set(
-      (route.sailings || [])
-        .filter(s => s.vesselName && (s.sailingStatus === 'current' || s.sailingStatus === 'past'))
-        .map(s => s.vesselName)
-    );
+  // Build map of vesselName → [departure minutes] for current/past sailings on a route
+  // Used to check whether a vessel has made a return crossing after a specific time
+  function vesselReturnTimes(route) {
+    if (!route) return {};
+    const map = {};
+    (route.sailings || []).forEach(s => {
+      if (!s.vesselName || !s.time) return;
+      if (s.sailingStatus !== 'current' && s.sailingStatus !== 'past') return;
+      (map[s.vesselName] = map[s.vesselName] || []).push(parseTimeToMins(s.time));
+    });
+    return map;
   }
-  const inDeparted  = departedVessels(inRoute);   // vessels confirmed sailing/sailed inbound
-  const outDeparted = departedVessels(outRoute);  // vessels confirmed sailing/sailed outbound
+  const inReturnTimes  = vesselReturnTimes(inRoute);
+  const outReturnTimes = vesselReturnTimes(outRoute);
 
   // Render each direction
   if (outRoute) {
-    renderDirection('outbound', outRoute, inDeparted);
+    renderDirection('outbound', outRoute, inReturnTimes);
   } else {
     document.getElementById('outbound-sailings').innerHTML =
       '<div class="no-capacity-note">No sailings found for this direction.</div>';
   }
   if (inRoute) {
-    renderDirection('inbound', inRoute, outDeparted);
+    renderDirection('inbound', inRoute, outReturnTimes);
   } else {
     document.getElementById('inbound-sailings').innerHTML =
       '<div class="no-capacity-note">No sailings found for this direction.</div>';
@@ -977,15 +979,26 @@ function renderRoute() {
   renderCameras();
 }
 
-function arrivalHasPassed(arrivalTimeStr) {
-  if (!arrivalTimeStr) return false;
-  const [h, m] = arrivalTimeStr.split(':').map(Number);
-  if (isNaN(h) || isNaN(m)) return false;
-  const now = new Date();
-  return (now.getHours() * 60 + now.getMinutes()) > (h * 60 + m);
+function parseTimeToMins(timeStr) {
+  if (!timeStr) return -1;
+  const match = timeStr.match(/(\d+):(\d+)\s*(am|pm)?/i);
+  if (!match) return -1;
+  let h = parseInt(match[1]);
+  const m = parseInt(match[2]);
+  const period = (match[3] || '').toLowerCase();
+  if (period === 'pm' && h !== 12) h += 12;
+  if (period === 'am' && h === 12) h = 0;
+  return h * 60 + m;
 }
 
-function renderDirection(dir, route, returnedVessels) {
+function arrivalHasPassed(arrivalTimeStr) {
+  const arrMins = parseTimeToMins(arrivalTimeStr);
+  if (arrMins < 0) return false;
+  const now = new Date();
+  return (now.getHours() * 60 + now.getMinutes()) > arrMins;
+}
+
+function renderDirection(dir, route, returnVesselTimes) {
   const sailings = (route.sailings || []).filter(s => s.time);
   const container = document.getElementById(dir + '-sailings');
 
@@ -996,8 +1009,10 @@ function renderDirection(dir, route, returnedVessels) {
     let badge = cls;
 
     if (cls === 'current') {
-      if (s.vesselName && returnedVessels && returnedVessels.has(s.vesselName)) {
-        // Same vessel confirmed on return leg — it arrived
+      const depMins = parseTimeToMins(s.time);
+      const returnTimes = (returnVesselTimes && s.vesselName && returnVesselTimes[s.vesselName]) || [];
+      if (returnTimes.some(t => t > depMins)) {
+        // Same vessel departed on return leg AFTER this sailing left — it arrived
         cls = 'past'; badge = 'past';
       } else if (arrivalHasPassed(s.arrivalTime)) {
         // Overdue: keep as current but flag it
