@@ -1047,7 +1047,8 @@ function sailingHTML(s) {
 
 function pastSailingHTML(s) {
   const isCurrent = s.cls === 'current';
-  const timeStr   = s.arrivalTime ? `${s.time} → ${s.arrivalTime}` : s.time;
+  const arrPart   = s.arrivalTime ? ` → ${isCurrent ? '(' + s.arrivalTime + ')' : s.arrivalTime}` : '';
+  const timeStr   = s.time + arrPart;
   const vessel    = s.vesselName || '—';
   const fillPct   = parseInt(s.fill) || 0;
   const fillStr   = fillPct > 0 ? `Fill ${fillPct}%` : 'Fill —';
