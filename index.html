@@ -983,12 +983,13 @@ function renderDirection(dir, route) {
     return { ...s, cls, badge };
   });
 
-  const past   = classified.filter(s => s.cls === 'past');
-  const active = classified.filter(s => s.cls !== 'past');
+  const past     = classified.filter(s => s.cls === 'past');
+  const current  = classified.filter(s => s.cls === 'current');
+  const upcoming = classified.filter(s => s.cls !== 'past' && s.cls !== 'current');
 
   let html = '';
 
-  // Past sailings at the top (chronologically first)
+  // Past sailings at the top (collapsible)
   if (past.length) {
     const show = showPast[dir];
     if (show) {
@@ -999,21 +1000,22 @@ function renderDirection(dir, route) {
     </div>`;
   }
 
-  // Upcoming sailings below
-  active.forEach(s => {
-    html += sailingHTML(s);
-  });
+  // Current (on route) — always visible, compact
+  current.forEach(s => { html += sailingHTML(s); });
+
+  // Upcoming sailings
+  upcoming.forEach(s => { html += sailingHTML(s); });
 
   container.innerHTML = html;
 
   // Count label
-  const futureCount = active.filter(s => s.cls === 'future' || s.cls === 'next').length;
+  const futureCount = upcoming.length;
   document.getElementById(dir + '-count').textContent =
     futureCount + ' upcoming';
 }
 
 function sailingHTML(s) {
-  if (s.cls === 'past') return pastSailingHTML(s);
+  if (s.cls === 'past' || s.cls === 'current') return pastSailingHTML(s);
 
   let badgeHTML = '';
   if (s.badge === 'current') badgeHTML = '<span class="sailing-status-badge badge-current">On route</span>';
@@ -1044,20 +1046,23 @@ function sailingHTML(s) {
 }
 
 function pastSailingHTML(s) {
+  const isCurrent = s.cls === 'current';
   const timeStr   = s.arrivalTime ? `${s.time} → ${s.arrivalTime}` : s.time;
   const vessel    = s.vesselName || '—';
   const fillPct   = parseInt(s.fill) || 0;
   const fillStr   = fillPct > 0 ? `Fill ${fillPct}%` : 'Fill —';
-  const statusHTML = s.vesselStatus
-    ? `<span class="past-status-badge">${s.vesselStatus}</span>` : '';
+
+  let badgesHTML = '';
+  if (isCurrent) badgesHTML += `<span class="sailing-status-badge badge-current">On route</span>`;
+  if (s.vesselStatus) badgesHTML += `<span class="past-status-badge">${s.vesselStatus}</span>`;
 
   return `
-    <div class="sailing-row past">
+    <div class="sailing-row past${isCurrent ? ' current' : ''}">
       <div class="past-info">
         <span class="past-time">${timeStr}</span>
         <span class="past-vessel">${vessel}</span>
         <span class="past-fill">${fillStr}</span>
-        ${statusHTML}
+        ${badgesHTML}
       </div>
     </div>`;
 }
