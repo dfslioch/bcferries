@@ -988,22 +988,21 @@ function renderDirection(dir, route) {
 
   let html = '';
 
-  // Active sailings
+  // Past sailings at the top (chronologically first)
+  if (past.length) {
+    const show = showPast[dir];
+    if (show) {
+      html += past.map(sailingHTML).join('');
+    }
+    html += `<div class="past-toggle" onclick="togglePast('${dir}')">
+      ${show ? '▲ Hide past sailings' : '▼ Show ' + past.length + ' past sailing' + (past.length !== 1 ? 's' : '')}
+    </div>`;
+  }
+
+  // Upcoming sailings below
   active.forEach(s => {
     html += sailingHTML(s);
   });
-
-  // Past sailings (collapsible)
-  if (past.length) {
-    const show = showPast[dir];
-    html += `<div class="past-toggle" onclick="togglePast('${dir}')">
-      ${show ? '▲ Hide' : '▼ Show'} ${past.length} past sailing${past.length !== 1 ? 's' : ''}
-    </div>`;
-    if (show) {
-      const pastHTML = past.map(sailingHTML).join('');
-      html += `<div id="past-${dir}">${pastHTML}</div>`;
-    }
-  }
 
   container.innerHTML = html;
 
