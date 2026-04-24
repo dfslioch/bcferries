@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BC Ferries</title>
+<style>
+  :root {
+    --teal-50: #e8f4f4;
+    --teal-100: #c5e4e4;
+    --teal-200: #8ecece;
+    --teal-400: #4aa8a8;
+    --teal-600: #2a7878;
+    --teal-800: #1a5050;
+    --teal-900: #0f3030;
+    --amber: #c47c1a;
+    --amber-light: #fff3dc;
+    --green: #2d7a3a;
+    --green-light: #e6f4e8;
+    --red: #b03030;
+    --red-light: #fce8e8;
+    --gray-50: #f5f7f7;
+    --gray-100: #e8ecec;
+    --gray-300: #b0bebe;
+    --gray-400: #889898;
+    --gray-500: #607070;
+    --gray-700: #3a4848;
+    --white: #ffffff;
+    --text: #1a2e2e;
+    --text-muted: #567070;
+    --shadow: 0 2px 8px rgba(0,60,60,0.10);
+    --shadow-lg: 0 4px 20px rgba(0,60,60,0.14);
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--teal-50);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--teal-600);
+    color: var(--white);
+    padding: 0.9rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+  }
+
+  .ferry-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .header-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-subtitle {
+    font-size: 0.78rem;
+    opacity: 0.8;
+    white-space: nowrap;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-ghost {
+    background: rgba(255,255,255,0.15);
+    color: var(--white);
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.25); }
+
+  .btn-primary {
+    background: var(--teal-600);
+    color: var(--white);
+    border: 1px solid var(--teal-800);
+  }
+  .btn-primary:hover { background: var(--teal-800); }
+
+  .btn-secondary {
+    background: var(--white);
+    color: var(--teal-700, var(--teal-600));
+    border: 1px solid var(--teal-200);
+  }
+  .btn-secondary:hover { background: var(--teal-50); }
+
+  /* ── Refresh bar ── */
+  .refresh-bar {
+    background: var(--teal-800);
+    padding: 0.45rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .refresh-status {
+    font-size: 0.76rem;
+    color: rgba(255,255,255,0.75);
+  }
+
+  .auto-refresh-group {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .auto-refresh-label {
+    font-size: 0.76rem;
+    color: rgba(255,255,255,0.75);
+    white-space: nowrap;
+  }
+
+  .refresh-options {
+    display: flex;
+    gap: 2px;
+  }
+
+  .refresh-opt {
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .refresh-opt.active {
+    background: rgba(255,255,255,0.25);
+    color: var(--white);
+    border-color: rgba(255,255,255,0.5);
+  }
+  .refresh-opt:hover { background: rgba(255,255,255,0.15); }
+
+  /* ── Main content ── */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+
+  /* ── Loading / Error states ── */
+  .state-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    box-shadow: var(--shadow);
+    margin-top: 1rem;
+  }
+
+  .state-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+  .state-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.4rem; }
+  .state-msg { color: var(--text-muted); font-size: 0.9rem; }
+
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--teal-100);
+    border-top-color: var(--teal-400);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Route picker ── */
+  #route-picker {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 1rem;
+  }
+
+  .picker-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+  }
+
+  .route-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .route-btn {
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--teal-100);
+    background: var(--gray-50);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-align: left;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .route-btn:hover {
+    border-color: var(--teal-400);
+    background: var(--teal-50);
+    color: var(--teal-800);
+  }
+  .route-btn.selected {
+    border-color: var(--teal-600);
+    background: var(--teal-50);
+    color: var(--teal-800);
+    font-weight: 600;
+  }
+  .route-btn .arrow { color: var(--teal-400); font-size: 0.8rem; }
+
+  .picker-actions {
+    margin-top: 0.9rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+
+  /* ── Direction tabs ── */
+  .direction-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .dir-tab {
+    flex: 1;
+    padding: 0.55rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--teal-100);
+    background: var(--white);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .dir-tab.active {
+    background: var(--teal-600);
+    color: var(--white);
+    border-color: var(--teal-600);
+  }
+  .dir-tab:hover:not(.active) {
+    border-color: var(--teal-300, var(--teal-200));
+    color: var(--teal-800);
+  }
+
+  /* ── Route section ── */
+  .route-section {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+
+  .route-header {
+    background: var(--teal-600);
+    color: var(--white);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .route-name {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .sailing-count {
+    font-size: 0.78rem;
+    opacity: 0.8;
+  }
+
+  /* ── Sailing rows ── */
+  .sailings-list { width: 100%; }
+
+  .sailing-row {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--gray-100);
+    transition: background 0.1s;
+  }
+  .sailing-row:last-child { border-bottom: none; }
+
+  .sailing-row.past {
+    opacity: 0.4;
+  }
+
+  .sailing-row.current {
+    background: var(--amber-light);
+    border-left: 3px solid var(--amber);
+  }
+
+  .sailing-row.next {
+    background: #f0f9f0;
+    border-left: 3px solid var(--green);
+  }
+
+  .sailing-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .sailing-time {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .sailing-arr {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .sailing-vessel {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    text-align: right;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sailing-status-badge {
+    display: inline-block;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .badge-current { background: var(--amber-light); color: var(--amber); }
+  .badge-next    { background: var(--green-light); color: var(--green); }
+  .badge-future  { background: var(--gray-100); color: var(--gray-500); }
+  .badge-past    { background: var(--gray-100); color: var(--gray-400); }
+
+  /* ── Capacity bars ── */
+  .capacity-bars {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.4rem;
+    margin-top: 0.35rem;
+  }
+
+  .cap-item { display: flex; flex-direction: column; gap: 2px; }
+
+  .cap-label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .cap-pct {
+    font-weight: 700;
+    font-size: 0.78rem;
+  }
+
+  .cap-bar-track {
+    height: 5px;
+    background: var(--gray-100);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .cap-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  .fill-low    { background: var(--green); }
+  .fill-mid    { background: var(--amber); }
+  .fill-high   { background: #d06030; }
+  .fill-full   { background: var(--red); }
+
+  /* ── No capacity note ── */
+  .no-capacity-note {
+    padding: 0.6rem 1rem;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-style: italic;
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  /* ── Past sailings toggle ── */
+  .past-toggle {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    color: var(--teal-600);
+    cursor: pointer;
+    text-align: center;
+    background: var(--gray-50);
+    border-top: 1px solid var(--gray-100);
+    user-select: none;
+  }
+  .past-toggle:hover { background: var(--teal-50); }
+
+  /* ── Route picker overlay ── */
+  #picker-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,20,20,0.5);
+    z-index: 200;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1rem;
+    overflow-y: auto;
+  }
+  #picker-overlay.open { display: flex; }
+
+  .picker-modal {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: var(--shadow-lg);
+    margin-top: 4rem;
+  }
+
+  .picker-modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--teal-800);
+  }
+
+  /* ── Welcome screen ── */
+  #welcome {
+    display: none;
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    box-shadow: var(--shadow);
+    margin-top: 1rem;
+  }
+  #welcome.show { display: block; }
+
+  .welcome-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+  .welcome-title { font-size: 1.2rem; font-weight: 700; color: var(--teal-800); margin-bottom: 0.5rem; }
+  .welcome-msg { color: var(--text-muted); margin-bottom: 1.25rem; font-size: 0.9rem; }
+
+  /* ── Desktop layout ── */
+  @media (min-width: 600px) {
+    .direction-tabs { display: none; }
+    .route-panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+  }
+
+  @media (max-width: 599px) {
+    .route-panels .route-section { display: none; }
+    .route-panels .route-section.active-panel { display: block; }
+    .capacity-bars { grid-template-columns: 1fr 1fr 1fr; }
+  }
+
+  /* ── Spinning refresh indicator ── */
+  .refreshing .refresh-icon { animation: spin 0.8s linear infinite; display: inline-block; }
+
+  /* ── Responsive tweaks ── */
+  @media (max-width: 400px) {
+    .sailing-time { font-size: 0.95rem; }
+    .cap-label { font-size: 0.65rem; }
+    .cap-pct { font-size: 0.72rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <span class="ferry-icon">⛴</span>
+    <div>
+      <div class="header-title" id="header-title">BC Ferries</div>
+      <div class="header-subtitle" id="header-subtitle">Loading…</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-ghost" id="btn-refresh" onclick="doRefresh()">
+      <span class="refresh-icon" id="refresh-icon">↻</span> Refresh
+    </button>
+    <button class="btn btn-ghost" id="btn-route" onclick="openPicker()">
+      ☰ Routes
+    </button>
+  </div>
+</header>
+
+<div class="refresh-bar">
+  <span class="refresh-status" id="refresh-status">Not loaded yet</span>
+  <div class="auto-refresh-group">
+    <span class="auto-refresh-label">Auto:</span>
+    <div class="refresh-options">
+      <button class="refresh-opt active" data-interval="0"   onclick="setAutoRefresh(0)">Off</button>
+      <button class="refresh-opt"        data-interval="120" onclick="setAutoRefresh(120)">2m</button>
+      <button class="refresh-opt"        data-interval="300" onclick="setAutoRefresh(300)">5m</button>
+    </div>
+  </div>
+</div>
+
+<main>
+  <!-- Welcome / first run -->
+  <div id="welcome">
+    <div class="welcome-icon">⛴</div>
+    <div class="welcome-title">Welcome to BC Ferries Tracker</div>
+    <div class="welcome-msg">Choose your route to get started. Your preference will be saved for next time.</div>
+    <button class="btn btn-primary" onclick="openPicker()">Choose a Route</button>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="state-card" style="display:none">
+    <div class="spinner"></div>
+    <div class="state-title">Loading sailings…</div>
+  </div>
+
+  <!-- Error -->
+  <div id="error-state" class="state-card" style="display:none">
+    <div class="state-icon">⚠️</div>
+    <div class="state-title">Could not load data</div>
+    <div class="state-msg" id="error-msg">Check your connection and try again.</div>
+    <br>
+    <button class="btn btn-primary" onclick="doRefresh()">Try Again</button>
+  </div>
+
+  <!-- Direction tabs (mobile only) -->
+  <div class="direction-tabs" id="dir-tabs" style="display:none">
+    <button class="dir-tab active" id="tab-outbound" onclick="switchTab('outbound')">
+      <span id="tab-out-label">Outbound</span>
+    </button>
+    <button class="dir-tab" id="tab-inbound" onclick="switchTab('inbound')">
+      <span id="tab-in-label">Inbound</span>
+    </button>
+  </div>
+
+  <!-- Route panels -->
+  <div class="route-panels" id="route-panels" style="display:none">
+    <div class="route-section active-panel" id="panel-outbound">
+      <div class="route-header">
+        <span class="route-name" id="outbound-name">—</span>
+        <span class="sailing-count" id="outbound-count"></span>
+      </div>
+      <div class="sailings-list" id="outbound-sailings"></div>
+    </div>
+    <div class="route-section" id="panel-inbound">
+      <div class="route-header">
+        <span class="route-name" id="inbound-name">—</span>
+        <span class="sailing-count" id="inbound-count"></span>
+      </div>
+      <div class="sailings-list" id="inbound-sailings"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Route picker overlay -->
+<div id="picker-overlay" onclick="overlayClick(event)">
+  <div class="picker-modal">
+    <div class="picker-modal-title">Choose your route</div>
+    <div class="route-grid" id="route-grid"></div>
+    <div class="picker-actions">
+      <button class="btn btn-secondary" onclick="closePicker()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// Terminal & route data
+// ─────────────────────────────────────────────
+const TERMINALS = {
+  TSA: 'Tsawwassen',
+  SWB: 'Swartz Bay',
+  SGI: 'Southern Gulf Islands',
+  DUK: 'Duke Point (Nanaimo)',
+  FUL: 'Fulford Harbour',
+  HSB: 'Horseshoe Bay',
+  NAN: 'Departure Bay (Nanaimo)',
+  LNG: 'Langdale',
+  BOW: 'Bowen Island'
+};
+
+// All capacity route pairs [from, to]
+const CAPACITY_ROUTES = [
+  ['TSA','SWB'], ['SWB','TSA'],
+  ['TSA','SGI'], ['SWB','SGI'],
+  ['TSA','DUK'], ['DUK','TSA'],
+  ['HSB','NAN'], ['NAN','HSB'],
+  ['HSB','LNG'], ['LNG','HSB'],
+  ['HSB','BOW'], ['BOW','HSB'],
+  ['SWB','FUL'], ['FUL','SWB']
+];
+
+// Route pairs grouped for display (both directions together)
+const ROUTE_PAIRS = [
+  { label: 'Tsawwassen ↔ Swartz Bay',         from:'TSA', to:'SWB' },
+  { label: 'Tsawwassen ↔ Duke Point',          from:'TSA', to:'DUK' },
+  { label: 'Tsawwassen ↔ Southern Gulf Islands',from:'TSA', to:'SGI' },
+  { label: 'Swartz Bay ↔ Southern Gulf Islands',from:'SWB', to:'SGI' },
+  { label: 'Swartz Bay ↔ Fulford Harbour',     from:'SWB', to:'FUL' },
+  { label: 'Horseshoe Bay ↔ Langdale',         from:'HSB', to:'LNG' },
+  { label: 'Horseshoe Bay ↔ Departure Bay',    from:'HSB', to:'NAN' },
+  { label: 'Horseshoe Bay ↔ Bowen Island',     from:'HSB', to:'BOW' }
+];
+
+function termName(code) { return TERMINALS[code] || code; }
+function routeLabel(from, to) { return termName(from) + ' → ' + termName(to); }
+
+// ─────────────────────────────────────────────
+// Cookie helpers
+// ─────────────────────────────────────────────
+function setCookie(name, value, days) {
+  const d = new Date();
+  d.setTime(d.getTime() + days * 86400000);
+  document.cookie = name + '=' + encodeURIComponent(value) + ';expires=' + d.toUTCString() + ';path=/;SameSite=Lax';
+}
+function getCookie(name) {
+  const c = document.cookie.split(';').find(c => c.trim().startsWith(name + '='));
+  return c ? decodeURIComponent(c.trim().slice(name.length + 1)) : null;
+}
+
+// ─────────────────────────────────────────────
+// App state
+// ─────────────────────────────────────────────
+let apiData = null;
+let currentFrom = null;
+let currentTo   = null;
+let autoInterval = 0;
+let autoTimer    = null;
+let activeTab    = 'outbound';
+let showPast     = { outbound: false, inbound: false };
+
+// ─────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────
+function init() {
+  // Load saved preferences
+  const savedRoute    = getCookie('bcf_route');
+  const savedInterval = parseInt(getCookie('bcf_interval') || '0');
+
+  if (savedRoute) {
+    const [f, t] = savedRoute.split('_');
+    if (f && t) { currentFrom = f; currentTo = t; }
+  }
+
+  if (savedInterval) {
+    setAutoRefresh(savedInterval, true);
+  }
+
+  if (currentFrom && currentTo) {
+    loadData();
+  } else {
+    // Default to HSB↔LNG
+    currentFrom = 'HSB'; currentTo = 'LNG';
+    loadData();
+  }
+}
+
+// ─────────────────────────────────────────────
+// Data fetching
+// ─────────────────────────────────────────────
+async function loadData() {
+  showLoading(true);
+  try {
+    const res = await fetch('https://www.bcferriesapi.ca/v2/capacity/');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    apiData = await res.json();
+    showLoading(false);
+    renderRoute();
+    const now = new Date();
+    document.getElementById('refresh-status').textContent =
+      'Updated ' + now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  } catch(e) {
+    showLoading(false);
+    showError('Could not reach the BC Ferries API. ' + e.message);
+  }
+}
+
+async function doRefresh() {
+  const btn = document.getElementById('btn-refresh');
+  btn.classList.add('refreshing');
+  await loadData();
+  btn.classList.remove('refreshing');
+}
+
+function setAutoRefresh(seconds, silent) {
+  autoInterval = seconds;
+  if (!silent) setCookie('bcf_interval', seconds, 365);
+  clearInterval(autoTimer);
+  if (seconds > 0) {
+    autoTimer = setInterval(loadData, seconds * 1000);
+  }
+  document.querySelectorAll('.refresh-opt').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.interval) === seconds);
+  });
+}
+
+// ─────────────────────────────────────────────
+// Render
+// ─────────────────────────────────────────────
+function renderRoute() {
+  if (!apiData || !currentFrom || !currentTo) return;
+
+  const routes = apiData.routes || apiData.capacityRoutes || [];
+
+  // Find outbound (from→to) and inbound (to→from)
+  const outCode = currentFrom + currentTo;
+  const inCode  = currentTo + currentFrom;
+
+  const outRoute = routes.find(r => r.routeCode === outCode);
+  const inRoute  = routes.find(r => r.routeCode === inCode);
+
+  // Header
+  const pairLabel = termName(currentFrom) + ' ↔ ' + termName(currentTo);
+  document.getElementById('header-title').textContent = 'BC Ferries';
+  document.getElementById('header-subtitle').textContent = pairLabel;
+
+  // Show panels
+  document.getElementById('welcome').classList.remove('show');
+  document.getElementById('route-panels').style.display = '';
+  document.getElementById('dir-tabs').style.display = '';
+  // Update tab labels
+  document.getElementById('tab-out-label').textContent = termName(currentFrom);
+  document.getElementById('tab-in-label').textContent  = termName(currentTo);
+
+  // Render each direction
+  if (outRoute) {
+    renderDirection('outbound', outRoute);
+  } else {
+    document.getElementById('outbound-sailings').innerHTML =
+      '<div class="no-capacity-note">No sailings found for this direction.</div>';
+  }
+  if (inRoute) {
+    renderDirection('inbound', inRoute);
+  } else {
+    document.getElementById('inbound-sailings').innerHTML =
+      '<div class="no-capacity-note">No sailings found for this direction.</div>';
+  }
+
+  document.getElementById('outbound-name').textContent = routeLabel(currentFrom, currentTo);
+  document.getElementById('inbound-name').textContent  = routeLabel(currentTo, currentFrom);
+}
+
+function renderDirection(dir, route) {
+  const sailings = (route.sailings || []).filter(s => s.time);
+  const container = document.getElementById(dir + '-sailings');
+
+  // Classify sailings
+  let foundNext = false;
+  const classified = sailings.map(s => {
+    let cls = s.sailingStatus || 'future';
+    let badge = cls;
+    if (cls === 'future' && !foundNext) {
+      cls = 'next';
+      badge = 'next';
+      foundNext = true;
+    }
+    return { ...s, cls, badge };
+  });
+
+  const past   = classified.filter(s => s.cls === 'past');
+  const active = classified.filter(s => s.cls !== 'past');
+
+  let html = '';
+
+  // Active sailings
+  active.forEach(s => {
+    html += sailingHTML(s);
+  });
+
+  // Past sailings (collapsible)
+  if (past.length) {
+    const show = showPast[dir];
+    html += `<div class="past-toggle" onclick="togglePast('${dir}')">
+      ${show ? '▲ Hide' : '▼ Show'} ${past.length} past sailing${past.length !== 1 ? 's' : ''}
+    </div>`;
+    if (show) {
+      const pastHTML = past.map(sailingHTML).join('');
+      html += `<div id="past-${dir}">${pastHTML}</div>`;
+    }
+  }
+
+  container.innerHTML = html;
+
+  // Count label
+  const futureCount = active.filter(s => s.cls === 'future' || s.cls === 'next').length;
+  document.getElementById(dir + '-count').textContent =
+    futureCount + ' upcoming';
+}
+
+function sailingHTML(s) {
+  const hasFill = s.cls !== 'past' && (s.fill > 0 || s.carFill > 0 || s.oversizeFill > 0);
+  const showBars = s.cls !== 'past';
+
+  let badgeHTML = '';
+  if (s.badge === 'current') badgeHTML = '<span class="sailing-status-badge badge-current">On route</span>';
+  else if (s.badge === 'next') badgeHTML = '<span class="sailing-status-badge badge-next">Next</span>';
+
+  let arrHTML = s.arrivalTime ? ` → ${s.arrivalTime}` : '';
+  let vesselHTML = s.vesselName ? `<span class="sailing-vessel">${s.vesselName}</span>` : '';
+
+  let barsHTML = '';
+  if (showBars) {
+    barsHTML = `
+      <div class="capacity-bars">
+        ${capBar('Fill', s.fill)}
+        ${capBar('Car', s.carFill)}
+        ${capBar('Oversize', s.oversizeFill)}
+      </div>`;
+  }
+
+  return `
+    <div class="sailing-row ${s.cls}">
+      <div class="sailing-top">
+        <span class="sailing-time">${s.time}${arrHTML ? '<span class="sailing-arr">' + arrHTML + '</span>' : ''}</span>
+        ${badgeHTML}
+        ${vesselHTML}
+      </div>
+      ${barsHTML}
+    </div>`;
+}
+
+function capBar(label, pct) {
+  const p = parseInt(pct) || 0;
+  let colorClass = 'fill-low';
+  if (p >= 90) colorClass = 'fill-full';
+  else if (p >= 70) colorClass = 'fill-high';
+  else if (p >= 45) colorClass = 'fill-mid';
+
+  const displayPct = p > 0 ? p + '%' : '—';
+
+  return `
+    <div class="cap-item">
+      <div class="cap-label">
+        <span>${label}</span>
+        <span class="cap-pct">${displayPct}</span>
+      </div>
+      <div class="cap-bar-track">
+        <div class="cap-bar-fill ${colorClass}" style="width:${p}%"></div>
+      </div>
+    </div>`;
+}
+
+// ─────────────────────────────────────────────
+// Mobile tab switching
+// ─────────────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('panel-outbound').classList.toggle('active-panel', tab === 'outbound');
+  document.getElementById('panel-inbound').classList.toggle('active-panel',  tab === 'inbound');
+  document.getElementById('tab-outbound').classList.toggle('active', tab === 'outbound');
+  document.getElementById('tab-inbound').classList.toggle('active',  tab === 'inbound');
+}
+
+// ─────────────────────────────────────────────
+// Past sailings toggle
+// ─────────────────────────────────────────────
+function togglePast(dir) {
+  showPast[dir] = !showPast[dir];
+  renderRoute();
+}
+
+// ─────────────────────────────────────────────
+// Route picker
+// ─────────────────────────────────────────────
+function openPicker() {
+  buildPickerGrid();
+  document.getElementById('picker-overlay').classList.add('open');
+}
+function closePicker() {
+  document.getElementById('picker-overlay').classList.remove('open');
+}
+function overlayClick(e) {
+  if (e.target === document.getElementById('picker-overlay')) closePicker();
+}
+
+function buildPickerGrid() {
+  const grid = document.getElementById('route-grid');
+  const currentKey = currentFrom + '_' + currentTo;
+  grid.innerHTML = ROUTE_PAIRS.map(rp => {
+    const key = rp.from + '_' + rp.to;
+    const sel = (currentFrom === rp.from && currentTo === rp.to) ||
+                (currentFrom === rp.to   && currentTo === rp.from);
+    return `<button class="route-btn ${sel ? 'selected' : ''}" onclick="selectRoute('${rp.from}','${rp.to}')">
+      <span>${termName(rp.from)} ↔ ${termName(rp.to)}</span>
+      ${sel ? '<span class="arrow">✓</span>' : ''}
+    </button>`;
+  }).join('');
+}
+
+function selectRoute(from, to) {
+  currentFrom = from;
+  currentTo   = to;
+  setCookie('bcf_route', from + '_' + to, 365);
+  closePicker();
+  showPast = { outbound: false, inbound: false };
+  if (apiData) {
+    renderRoute();
+  } else {
+    loadData();
+  }
+}
+
+// ─────────────────────────────────────────────
+// UI state helpers
+// ─────────────────────────────────────────────
+function showLoading(on) {
+  document.getElementById('loading').style.display       = on ? '' : 'none';
+  document.getElementById('error-state').style.display   = 'none';
+  if (on) {
+    document.getElementById('route-panels').style.display = 'none';
+    document.getElementById('dir-tabs').style.display     = 'none';
+  }
+}
+
+function showError(msg) {
+  document.getElementById('error-state').style.display = '';
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('route-panels').style.display = 'none';
+  document.getElementById('dir-tabs').style.display     = 'none';
+}
+
+// ─────────────────────────────────────────────
+// Start
+// ─────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
