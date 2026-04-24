@@ -435,10 +435,11 @@
     letter-spacing: 0.04em;
     white-space: nowrap;
   }
-  .badge-current { background: var(--amber-light); color: var(--amber); }
-  .badge-next    { background: var(--green-light); color: var(--green); }
-  .badge-future  { background: var(--gray-100); color: var(--gray-500); }
-  .badge-past    { background: var(--gray-100); color: var(--gray-400); }
+  .badge-current  { background: var(--amber-light); color: var(--amber); }
+  .badge-next     { background: var(--green-light); color: var(--green); }
+  .badge-future   { background: var(--gray-100); color: var(--gray-500); }
+  .badge-past     { background: var(--gray-100); color: var(--gray-400); }
+  .badge-delayed  { background: #fce8d8; color: #d06030; }
 
   /* ── Capacity section ── */
   .sailing-capacity { margin-top: 0.4rem; }
@@ -939,15 +940,28 @@ function renderRoute() {
   document.getElementById('tab-out-label').textContent = termName(currentFrom);
   document.getElementById('tab-in-label').textContent  = termName(currentTo);
 
+  // Build sets of vessel names confirmed departed/arrived on each leg
+  // (current or past on the opposite direction = vessel has crossed)
+  function departedVessels(route) {
+    if (!route) return new Set();
+    return new Set(
+      (route.sailings || [])
+        .filter(s => s.vesselName && (s.sailingStatus === 'current' || s.sailingStatus === 'past'))
+        .map(s => s.vesselName)
+    );
+  }
+  const inDeparted  = departedVessels(inRoute);   // vessels confirmed sailing/sailed inbound
+  const outDeparted = departedVessels(outRoute);  // vessels confirmed sailing/sailed outbound
+
   // Render each direction
   if (outRoute) {
-    renderDirection('outbound', outRoute);
+    renderDirection('outbound', outRoute, inDeparted);
   } else {
     document.getElementById('outbound-sailings').innerHTML =
       '<div class="no-capacity-note">No sailings found for this direction.</div>';
   }
   if (inRoute) {
-    renderDirection('inbound', inRoute);
+    renderDirection('inbound', inRoute, outDeparted);
   } else {
     document.getElementById('inbound-sailings').innerHTML =
       '<div class="no-capacity-note">No sailings found for this direction.</div>';
@@ -959,7 +973,15 @@ function renderRoute() {
   renderCameras();
 }
 
-function renderDirection(dir, route) {
+function arrivalHasPassed(arrivalTimeStr) {
+  if (!arrivalTimeStr) return false;
+  const [h, m] = arrivalTimeStr.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return false;
+  const now = new Date();
+  return (now.getHours() * 60 + now.getMinutes()) > (h * 60 + m);
+}
+
+function renderDirection(dir, route, returnedVessels) {
   const sailings = (route.sailings || []).filter(s => s.time);
   const container = document.getElementById(dir + '-sailings');
 
@@ -968,6 +990,17 @@ function renderDirection(dir, route) {
   const classified = sailings.map(s => {
     let cls = s.sailingStatus || 'future';
     let badge = cls;
+
+    if (cls === 'current') {
+      if (s.vesselName && returnedVessels && returnedVessels.has(s.vesselName)) {
+        // Same vessel confirmed on return leg — it arrived
+        cls = 'past'; badge = 'past';
+      } else if (arrivalHasPassed(s.arrivalTime)) {
+        // Overdue: keep as current but flag it
+        badge = 'delayed';
+      }
+    }
+
     if (cls === 'future' && !foundNext) {
       cls = 'next';
       badge = 'next';
@@ -1050,10 +1083,18 @@ function pastSailingHTML(s) {
     .filter(v => v && !standardStatuses.has(v.toLowerCase()));
 
   let badgesHTML = '';
-  if (isCurrent) badgesHTML += `<span class="sailing-status-badge badge-current">On route</span>`;
-  extraStatuses.forEach(v => {
-    badgesHTML += `<span class="past-status-badge">${v}</span>`;
-  });
+  if (isCurrent) {
+    if (extraStatuses.length > 0) {
+      // Incident status from API explains the situation — show that instead
+      extraStatuses.forEach(v => {
+        badgesHTML += `<span class="sailing-status-badge badge-delayed">${v}</span>`;
+      });
+    } else if (s.badge === 'delayed') {
+      badgesHTML += `<span class="sailing-status-badge badge-delayed">Delayed?</span>`;
+    } else {
+      badgesHTML += `<span class="sailing-status-badge badge-current">On route</span>`;
+    }
+  }
 
   return `
     <div class="sailing-row past${isCurrent ? ' current' : ''}">
