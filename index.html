@@ -38,7 +38,10 @@
 
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background: var(--teal-50);
+    background-color: var(--teal-50);
+    background-image: url('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEBLAEsAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQICAQECAQEBAgICAgICAgICAQICAgICAgICAgL/2wBDAQEBAQEBAQEBAQECAQEBAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgL/wAARCAAeAB8DASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAABAECCv/EACcQAQABAwMDAwUBAAAAAAAAAAECAwQRABIhMUFRFCJCEzJhcYGC/8QAFwEBAAMAAAAAAAAAAAAAAAAAAAEGB//EACURAAECAwcFAAAAAAAAAAAAAAEAAhFRoSExMkFhceESIkLB8P/aAAwDAQACEQMRAD8A6gbU3+ot8m65o4pRekq1GUK0Yj5kQkf0NFHJ4eieE6mryJKKxlFJRkKMZCIid8hpciF6s6aQvQWpS6QukOalIPtrvyj8nk5yatFqwrE0DybUS3jHeKGi8RFlJIxDlWTgAOrpV2EatOiOfTUKdvLGMfUM1KuE7FSpI/zrQxssm6NS9TjakqVoS4XxUr4UO0fKmhhjyryqvL3ee+iEdILTiN+gl9JWMZznClTjunUkRjHzKSB34OXS51I2xK3tU3cxuLoElN43UqCuYUTycy/XXFq7W6qH30rWbTl3jOrKlQ3C9MRqzT86OGAPBjT0lrWg5uz05S4SjdEaNdjG4AhbXPEd+D20K+OsXgjLrFwOTRElFYyNs4rGcXhjKKiJ2cjqJkxnH5/umXnuq06vyr21vWnjg3yhtlLHllBX96KD3NJN7ajiq//Z');
+    background-repeat: repeat;
+    background-size: auto;
     color: var(--text);
     min-height: 100vh;
     font-size: 15px;
@@ -529,6 +532,41 @@
   /* ── Spinning refresh indicator ── */
   .refreshing .refresh-icon { animation: spin 0.8s linear infinite; display: inline-block; }
 
+  /* ── Cameras ── */
+  .cameras-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+  }
+
+  .camera-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .camera-label {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--white);
+    background: var(--teal-600);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .camera-img {
+    width: 100%;
+    display: block;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    background: var(--gray-100);
+  }
+
+  .camera-img.error { opacity: 0.3; }
+
   /* ── Responsive tweaks ── */
   @media (max-width: 400px) {
     .sailing-time { font-size: 0.95rem; }
@@ -620,6 +658,27 @@
       <div class="sailings-list" id="inbound-sailings"></div>
     </div>
   </div>
+
+  <!-- Terminal cameras -->
+  <div id="cameras-section" style="display:none">
+    <div class="cameras-grid" id="cameras-grid"></div>
+  </div>
+
+  <!-- Vessel tracker -->
+  <div id="tracker-section" style="display:none">
+    <div class="route-section" style="overflow:hidden">
+      <div class="route-header">
+        <span class="route-name">Vessel tracker</span>
+      </div>
+      <div style="padding:0; line-height:0">
+        <iframe id="vessel-iframe"
+          frameborder="0"
+          style="width:100%; height:400px; display:block; border:none"
+          title="BC Ferries vessel tracker">
+        </iframe>
+      </div>
+    </div>
+  </div>
 </main>
 
 <!-- Route picker overlay -->
@@ -661,16 +720,25 @@ const CAPACITY_ROUTES = [
 ];
 
 // Route pairs grouped for display (both directions together)
+// vesselRoute = BC Ferries' route number for the vessel tracker iframe
 const ROUTE_PAIRS = [
-  { label: 'Tsawwassen ↔ Swartz Bay',         from:'TSA', to:'SWB' },
-  { label: 'Tsawwassen ↔ Duke Point',          from:'TSA', to:'DUK' },
-  { label: 'Tsawwassen ↔ Southern Gulf Islands',from:'TSA', to:'SGI' },
-  { label: 'Swartz Bay ↔ Southern Gulf Islands',from:'SWB', to:'SGI' },
-  { label: 'Swartz Bay ↔ Fulford Harbour',     from:'SWB', to:'FUL' },
-  { label: 'Horseshoe Bay ↔ Langdale',         from:'HSB', to:'LNG' },
-  { label: 'Horseshoe Bay ↔ Departure Bay',    from:'HSB', to:'NAN' },
-  { label: 'Horseshoe Bay ↔ Bowen Island',     from:'HSB', to:'BOW' }
+  { label: 'Tsawwassen ↔ Swartz Bay',          from:'TSA', to:'SWB', vesselRoute: 1 },
+  { label: 'Tsawwassen ↔ Duke Point',           from:'TSA', to:'DUK', vesselRoute: 2 },
+  { label: 'Tsawwassen ↔ Southern Gulf Islands', from:'TSA', to:'SGI', vesselRoute: 3 },
+  { label: 'Swartz Bay ↔ Southern Gulf Islands', from:'SWB', to:'SGI', vesselRoute: 9 },
+  { label: 'Swartz Bay ↔ Fulford Harbour',      from:'SWB', to:'FUL', vesselRoute: 5 },
+  { label: 'Horseshoe Bay ↔ Langdale',          from:'HSB', to:'LNG', vesselRoute: 4 },
+  { label: 'Horseshoe Bay ↔ Departure Bay',     from:'HSB', to:'NAN', vesselRoute: 6 },
+  { label: 'Horseshoe Bay ↔ Bowen Island',      from:'HSB', to:'BOW', vesselRoute: 7 }
 ];
+
+// Lookup vessel route number by terminal pair (either direction)
+function getVesselRoute(from, to) {
+  const pair = ROUTE_PAIRS.find(r =>
+    (r.from === from && r.to === to) || (r.from === to && r.to === from)
+  );
+  return pair ? pair.vesselRoute : null;
+}
 
 function termName(code) { return TERMINALS[code] || code; }
 function routeLabel(from, to) { return termName(from) + ' → ' + termName(to); }
@@ -808,6 +876,8 @@ function renderRoute() {
 
   document.getElementById('outbound-name').textContent = routeLabel(currentFrom, currentTo);
   document.getElementById('inbound-name').textContent  = routeLabel(currentTo, currentFrom);
+
+  renderCameras();
 }
 
 function renderDirection(dir, route) {
@@ -987,6 +1057,49 @@ function showError(msg) {
   document.getElementById('error-msg').textContent = msg;
   document.getElementById('route-panels').style.display = 'none';
   document.getElementById('dir-tabs').style.display     = 'none';
+}
+
+// ─────────────────────────────────────────────
+// Terminal cameras
+// ─────────────────────────────────────────────
+const CAM_BASE = 'https://apigateway.bcferries.com/api/currentconditions/1.0/images/terminals/';
+
+function renderCameras() {
+  const section = document.getElementById('cameras-section');
+  const grid    = document.getElementById('cameras-grid');
+  if (!currentFrom || !currentTo) { section.style.display = 'none'; return; }
+
+  const terminals = [currentFrom, currentTo];
+  let html = '';
+  terminals.forEach(code => {
+    [1, 2].forEach(n => {
+      const url   = `${CAM_BASE}cam${n}_${code}.jpg?t=${Date.now()}`;
+      const label = `${termName(code)} — Cam ${n}`;
+      html += `
+        <div class="camera-card" id="cam-${code}-${n}">
+          <div class="camera-label">${label}</div>
+          <img class="camera-img"
+               src="${url}"
+               alt="${label}"
+               onerror="this.closest('.camera-card').style.display='none'">
+        </div>`;
+    });
+  });
+
+  grid.innerHTML = html;
+  section.style.display = '';
+
+  renderTracker();
+}
+
+function renderTracker() {
+  const section = document.getElementById('tracker-section');
+  const iframe  = document.getElementById('vessel-iframe');
+  const routeNum = getVesselRoute(currentFrom, currentTo);
+  if (!routeNum) { section.style.display = 'none'; return; }
+  const url = `https://apigateway.bcferries.com/api/currentconditions/1.0/images/vessels/route${routeNum}.html`;
+  iframe.src = url;
+  section.style.display = '';
 }
 
 // ─────────────────────────────────────────────
