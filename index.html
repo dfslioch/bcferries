@@ -851,7 +851,7 @@ let currentTo   = null;
 let autoInterval = 0;
 let autoTimer    = null;
 let activeTab    = 'outbound';
-let showPast     = { outbound: false, inbound: false };
+let showPast     = { outbound: true, inbound: true };
 
 // ─────────────────────────────────────────────
 // Init
@@ -1158,7 +1158,7 @@ function selectRoute(from, to) {
   currentTo   = to;
   setCookie('bcf_route', from + '_' + to, 365);
   closePicker();
-  showPast = { outbound: false, inbound: false };
+  showPast = { outbound: true, inbound: true };
   if (apiData) {
     renderRoute();
   } else {
