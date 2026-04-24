@@ -709,11 +709,11 @@
       <div class="route-header">
         <span class="route-name">Vessel tracker</span>
       </div>
-      <div style="padding:0; line-height:0">
+      <div id="tracker-container" style="padding:0; line-height:0; overflow:hidden">
         <iframe id="vessel-iframe"
           frameborder="0"
           scrolling="no"
-          style="width:100%; height:650px; display:block; border:none"
+          style="display:block; border:none; transform-origin:top left"
           title="BC Ferries vessel tracker">
         </iframe>
       </div>
@@ -1166,7 +1166,23 @@ function renderTracker() {
   const url = `https://apigateway.bcferries.com/api/currentconditions/1.0/images/vessels/route${routeNum}.html`;
   iframe.src = url;
   section.style.display = '';
+  scaleTracker();
 }
+
+function scaleTracker() {
+  const section    = document.getElementById('tracker-section');
+  const iframe     = document.getElementById('vessel-iframe');
+  const container  = document.getElementById('tracker-container');
+  if (!section || section.style.display === 'none') return;
+  const nativeSize = 500;
+  const scale      = container.clientWidth / nativeSize;
+  iframe.style.width     = nativeSize + 'px';
+  iframe.style.height    = nativeSize + 'px';
+  iframe.style.transform = `scale(${scale})`;
+  container.style.height = Math.ceil(nativeSize * scale) + 'px';
+}
+
+window.addEventListener('resize', scaleTracker);
 
 // ─────────────────────────────────────────────
 // Start
