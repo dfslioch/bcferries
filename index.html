@@ -371,13 +371,6 @@
     white-space: nowrap;
   }
 
-  .past-fill {
-    font-size: 0.75rem;
-    color: var(--gray-400);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
   .past-status-badge {
     display: inline-block;
     padding: 0.1rem 0.4rem;
@@ -1050,19 +1043,23 @@ function pastSailingHTML(s) {
   const arrPart   = s.arrivalTime ? ` → ${isCurrent ? '(' + s.arrivalTime + ')' : s.arrivalTime}` : '';
   const timeStr   = s.time + arrPart;
   const vessel    = s.vesselName || '—';
-  const fillPct   = parseInt(s.fill) || 0;
-  const fillStr   = fillPct > 0 ? `Fill ${fillPct}%` : 'Fill —';
+
+  // Collect non-standard status messages from either status field
+  const standardStatuses = new Set(['past', 'current', 'future']);
+  const extraStatuses = [s.sailingStatus, s.vesselStatus]
+    .filter(v => v && !standardStatuses.has(v.toLowerCase()));
 
   let badgesHTML = '';
   if (isCurrent) badgesHTML += `<span class="sailing-status-badge badge-current">On route</span>`;
-  if (s.vesselStatus) badgesHTML += `<span class="past-status-badge">${s.vesselStatus}</span>`;
+  extraStatuses.forEach(v => {
+    badgesHTML += `<span class="past-status-badge">${v}</span>`;
+  });
 
   return `
     <div class="sailing-row past${isCurrent ? ' current' : ''}">
       <div class="past-info">
         <span class="past-time">${timeStr}</span>
         <span class="past-vessel">${vessel}</span>
-        <span class="past-fill">${fillStr}</span>
         ${badgesHTML}
       </div>
     </div>`;
