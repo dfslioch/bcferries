@@ -532,27 +532,27 @@
   /* ── Spinning refresh indicator ── */
   .refreshing .refresh-icon { animation: spin 0.8s linear infinite; display: inline-block; }
 
-  /* ── Cameras ── */
-  .cameras-grid {
+  /* ── Cameras (inside panels) ── */
+  .panel-cameras {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.75rem;
-    margin-top: 0.25rem;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid var(--gray-100);
   }
 
   .camera-card {
-    background: var(--white);
-    border-radius: var(--radius);
     overflow: hidden;
-    box-shadow: var(--shadow);
+  }
+
+  .camera-card:first-child {
+    border-right: 1px solid var(--gray-100);
   }
 
   .camera-label {
-    padding: 0.4rem 0.75rem;
-    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
     font-weight: 600;
     color: var(--white);
-    background: var(--teal-600);
+    background: var(--teal-800);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -649,6 +649,7 @@
         <span class="sailing-count" id="outbound-count"></span>
       </div>
       <div class="sailings-list" id="outbound-sailings"></div>
+      <div class="panel-cameras" id="cameras-outbound"></div>
     </div>
     <div class="route-section" id="panel-inbound">
       <div class="route-header">
@@ -656,12 +657,8 @@
         <span class="sailing-count" id="inbound-count"></span>
       </div>
       <div class="sailings-list" id="inbound-sailings"></div>
+      <div class="panel-cameras" id="cameras-inbound"></div>
     </div>
-  </div>
-
-  <!-- Terminal cameras -->
-  <div id="cameras-section" style="display:none">
-    <div class="cameras-grid" id="cameras-grid"></div>
   </div>
 
   <!-- Vessel tracker -->
@@ -673,7 +670,8 @@
       <div style="padding:0; line-height:0">
         <iframe id="vessel-iframe"
           frameborder="0"
-          style="width:100%; height:400px; display:block; border:none"
+          scrolling="no"
+          style="width:100%; height:650px; display:block; border:none"
           title="BC Ferries vessel tracker">
         </iframe>
       </div>
@@ -942,7 +940,7 @@ function sailingHTML(s) {
   if (showBars) {
     barsHTML = `
       <div class="capacity-bars">
-        ${capBar('Fill', s.fill)}
+        ${capBarAvail(s.fill)}
         ${capBar('Car', s.carFill)}
         ${capBar('Oversize', s.oversizeFill)}
       </div>`;
@@ -956,6 +954,28 @@ function sailingHTML(s) {
         ${vesselHTML}
       </div>
       ${barsHTML}
+    </div>`;
+}
+
+function capBarAvail(fillPct) {
+  const fill = parseInt(fillPct) || 0;
+  const avail = 100 - fill;
+  const hasData = fill > 0;
+  let colorClass = 'fill-low';
+  if (avail < 10) colorClass = 'fill-full';
+  else if (avail < 30) colorClass = 'fill-high';
+  else if (avail < 55) colorClass = 'fill-mid';
+  const displayPct = hasData ? avail + '%' : '—';
+  const barWidth   = hasData ? avail : 0;
+  return `
+    <div class="cap-item">
+      <div class="cap-label">
+        <span>Available</span>
+        <span class="cap-pct">${displayPct}</span>
+      </div>
+      <div class="cap-bar-track">
+        <div class="cap-bar-fill ${colorClass}" style="width:${barWidth}%"></div>
+      </div>
     </div>`;
 }
 
@@ -1064,31 +1084,32 @@ function showError(msg) {
 // ─────────────────────────────────────────────
 const CAM_BASE = 'https://apigateway.bcferries.com/api/currentconditions/1.0/images/terminals/';
 
+function camerasHTML(code) {
+  const t = Date.now();
+  return [1, 2].map(n => {
+    const url   = `${CAM_BASE}cam${n}_${code}.jpg?t=${t}`;
+    const label = `${termName(code)} — Cam ${n}`;
+    return `
+      <div class="camera-card" id="cam-${code}-${n}">
+        <div class="camera-label">${label}</div>
+        <img class="camera-img"
+             src="${url}"
+             alt="${label}"
+             onerror="this.closest('.camera-card').style.display='none'">
+      </div>`;
+  }).join('');
+}
+
 function renderCameras() {
-  const section = document.getElementById('cameras-section');
-  const grid    = document.getElementById('cameras-grid');
-  if (!currentFrom || !currentTo) { section.style.display = 'none'; return; }
-
-  const terminals = [currentFrom, currentTo];
-  let html = '';
-  terminals.forEach(code => {
-    [1, 2].forEach(n => {
-      const url   = `${CAM_BASE}cam${n}_${code}.jpg?t=${Date.now()}`;
-      const label = `${termName(code)} — Cam ${n}`;
-      html += `
-        <div class="camera-card" id="cam-${code}-${n}">
-          <div class="camera-label">${label}</div>
-          <img class="camera-img"
-               src="${url}"
-               alt="${label}"
-               onerror="this.closest('.camera-card').style.display='none'">
-        </div>`;
-    });
-  });
-
-  grid.innerHTML = html;
-  section.style.display = '';
-
+  if (!currentFrom || !currentTo) {
+    document.getElementById('cameras-outbound').innerHTML = '';
+    document.getElementById('cameras-inbound').innerHTML  = '';
+    renderTracker();
+    return;
+  }
+  // Departure terminal for each direction
+  document.getElementById('cameras-outbound').innerHTML = camerasHTML(currentFrom);
+  document.getElementById('cameras-inbound').innerHTML  = camerasHTML(currentTo);
   renderTracker();
 }
 
