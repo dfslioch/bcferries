@@ -41,27 +41,37 @@ A single-file static HTML/JS web app that displays BC Ferries sailing schedules 
 - Decision: **not adding noncapacity routes for now**
 
 ### Terminal Camera Images (BC Ferries)
-- URL pattern: `https://apigateway.bcferries.com/api/currentconditions/1.0/images/terminals/cam1_HSB.jpg`
-- Cameras: `cam1_XXX.jpg` and `cam2_XXX.jpg` per terminal code
-- Confirmed working for: HSB, LNG (all 4 URLs tested)
+- Base URL: `https://ccimg.bcferries.com/cc/support/terminals/`
+- Pattern: `cam1_XXX.jpg` and `cam2_XXX.jpg` per terminal code
 - Images embedded with cache-busting `?t=timestamp` on refresh
-- Camera cards auto-hide via `onerror` if camera doesn't exist for a terminal
-- Cameras are inside each route panel (anchored to bottom), showing departure terminal only
+- Camera cards auto-hide via `onerror` if camera doesn't exist
+- Cameras inside each route panel (anchored to bottom), showing departure terminal only
 - Clicking a camera opens a full-screen lightbox overlay; Escape or tap to close
+- Verified cameras (2026-04-27):
+  - TSA: cam1 ✓, cam2 ✓
+  - SWB: cam1 ✓, cam2 ✓
+  - DUK: cam1 ✓, cam2 ✓
+  - NAN: cam1 ✓, cam2 ✓
+  - HSB: cam1 ✓, cam2 ✓
+  - LNG: cam1 ✓, cam2 ✓
+  - BOW: cam1 ✓, cam2 ✗ (none)
+  - FUL: cam1 ✓, cam2 ✗ (none)
+  - SGI: no cameras
 
 ### Vessel Tracker (BC Ferries iframe)
-- URL pattern: `https://apigateway.bcferries.com/api/currentconditions/1.0/images/vessels/route4.html`
+- Base URL: `https://ccimg.bcferries.com/cc/support/vessels/`
+- Pattern: `route{N}.html`
 - Native content size: 500px wide × 650px tall (500×500 image + info text below)
 - App scales iframe to fit container using CSS transform + JS resize listener
-- Route numbers (confirmed: route 4 = HSB↔LNG; others are best-guess estimates):
-  - Route 1: TSA ↔ SWB (Tsawwassen ↔ Swartz Bay) — **NEEDS VERIFICATION**
-  - Route 2: TSA ↔ DUK (Tsawwassen ↔ Duke Point) — **NEEDS VERIFICATION**
-  - Route 3: TSA ↔ SGI (Tsawwassen ↔ Southern Gulf Islands) — **NEEDS VERIFICATION**
-  - Route 4: HSB ↔ LNG (Horseshoe Bay ↔ Langdale) — **CONFIRMED**
-  - Route 5: SWB ↔ FUL (Swartz Bay ↔ Fulford Harbour) — **NEEDS VERIFICATION**
-  - Route 6: HSB ↔ NAN (Horseshoe Bay ↔ Departure Bay) — **NEEDS VERIFICATION**
-  - Route 7: HSB ↔ BOW (Horseshoe Bay ↔ Bowen Island) — **NEEDS VERIFICATION**
-  - Route 9: SWB ↔ SGI (Swartz Bay ↔ Southern Gulf Islands) — **NEEDS VERIFICATION**
+- Route numbers (all verified 2026-04-27):
+  - Route 0: TSA ↔ SWB (Tsawwassen ↔ Swartz Bay) ✓
+  - Route 1: TSA ↔ DUK (Tsawwassen ↔ Duke Point) ✓
+  - Route 2: TSA ↔ SGI (Tsawwassen ↔ Southern Gulf Islands) ✓
+  - Route 3: NAN ↔ HSB (Departure Bay ↔ Horseshoe Bay) ✓
+  - Route 4: LNG ↔ HSB (Langdale ↔ Horseshoe Bay) ✓
+  - Route 5: BOW ↔ HSB (Bowen Island ↔ Horseshoe Bay) ✓
+  - Route 6: FUL ↔ SWB (Fulford Harbour ↔ Swartz Bay) ✓
+  - Route 7: SGI ↔ SWB (Southern Gulf Islands ↔ Swartz Bay) ✓
 
 ---
 
@@ -147,7 +157,7 @@ Format: `FROMTO` e.g. `HSBLNG` = Horseshoe Bay → Langdale
 ### Versioning / Cache
 - No-cache meta tags in `<head>` to prevent browser caching
 - Footer shows version in format `0.yy.M.d.HHmm` — update with every commit
-- Current version: `0.26.4.24.1645`
+- Current version: `0.26.4.24.1720`
 - Hard refresh: Ctrl+Shift+R bypasses all caches including GitHub Pages CDN (~10 min TTL)
 
 ### Footer
@@ -157,8 +167,6 @@ Format: `FROMTO` e.g. `HSBLNG` = Horseshoe Bay → Langdale
 ---
 
 ## Known Issues / TODO
-- [ ] Verify vessel tracker route numbers (all except route 4)
-- [ ] Webcam URLs unverified for terminals other than HSB/LNG — auto-hides gracefully
 - [ ] Non-capacity inter-island routes not added (terminal codes undocumented, Bowen Island API bug)
 - [ ] The `sailingDuration` field is often blank in the API — duration inferred from time/arrivalTime
 

@@ -859,14 +859,14 @@ const CAPACITY_ROUTES = [
 // Route pairs grouped for display (both directions together)
 // vesselRoute = BC Ferries' route number for the vessel tracker iframe
 const ROUTE_PAIRS = [
-  { label: 'Tsawwassen ↔ Swartz Bay',          from:'TSA', to:'SWB', vesselRoute: 1 },
-  { label: 'Tsawwassen ↔ Duke Point',           from:'TSA', to:'DUK', vesselRoute: 2 },
-  { label: 'Tsawwassen ↔ Southern Gulf Islands', from:'TSA', to:'SGI', vesselRoute: 3 },
-  { label: 'Swartz Bay ↔ Southern Gulf Islands', from:'SWB', to:'SGI', vesselRoute: 9 },
-  { label: 'Swartz Bay ↔ Fulford Harbour',      from:'SWB', to:'FUL', vesselRoute: 5 },
-  { label: 'Horseshoe Bay ↔ Langdale',          from:'HSB', to:'LNG', vesselRoute: 4 },
-  { label: 'Horseshoe Bay ↔ Departure Bay',     from:'HSB', to:'NAN', vesselRoute: 6 },
-  { label: 'Horseshoe Bay ↔ Bowen Island',      from:'HSB', to:'BOW', vesselRoute: 7 }
+  { label: 'Tsawwassen ↔ Swartz Bay',           from:'TSA', to:'SWB', vesselRoute: 0 },
+  { label: 'Tsawwassen ↔ Duke Point',            from:'TSA', to:'DUK', vesselRoute: 1 },
+  { label: 'Tsawwassen ↔ Southern Gulf Islands', from:'TSA', to:'SGI', vesselRoute: 2 },
+  { label: 'Swartz Bay ↔ Southern Gulf Islands', from:'SWB', to:'SGI', vesselRoute: 7 },
+  { label: 'Swartz Bay ↔ Fulford Harbour',       from:'SWB', to:'FUL', vesselRoute: 6 },
+  { label: 'Horseshoe Bay ↔ Langdale',           from:'HSB', to:'LNG', vesselRoute: 4 },
+  { label: 'Horseshoe Bay ↔ Departure Bay',      from:'HSB', to:'NAN', vesselRoute: 3 },
+  { label: 'Horseshoe Bay ↔ Bowen Island',       from:'HSB', to:'BOW', vesselRoute: 5 }
 ];
 
 // Lookup vessel route number by terminal pair (either direction)
@@ -1303,7 +1303,7 @@ function showError(msg) {
 // ─────────────────────────────────────────────
 // Terminal cameras
 // ─────────────────────────────────────────────
-const CAM_BASE = 'https://apigateway.bcferries.com/api/currentconditions/1.0/images/terminals/';
+const CAM_BASE = 'https://ccimg.bcferries.com/cc/support/terminals/';
 
 function camerasHTML(code) {
   const t = Date.now();
@@ -1340,7 +1340,7 @@ function renderTracker() {
   const iframe  = document.getElementById('vessel-iframe');
   const routeNum = getVesselRoute(currentFrom, currentTo);
   if (!routeNum) { section.style.display = 'none'; return; }
-  const url = `https://apigateway.bcferries.com/api/currentconditions/1.0/images/vessels/route${routeNum}.html`;
+  const url = `https://ccimg.bcferries.com/cc/support/vessels/route${routeNum}.html`;
   iframe.src = url;
   section.style.display = '';
   scaleTracker();
