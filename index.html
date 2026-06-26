@@ -7,6 +7,13 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>BC Ferries</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2a7878">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BC Ferries">
+<link rel="apple-touch-icon" href="icon.svg">
 <style>
   :root {
     --teal-50: #e8f4f4;
@@ -1384,10 +1391,20 @@ document.addEventListener('keydown', e => {
 // Start
 // ─────────────────────────────────────────────
 init();
+
+// ─────────────────────────────────────────────
+// Service Worker registration (PWA)
+// ─────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
 </script>
 <footer style="text-align:center;padding:12px;font-size:0.75rem;color:rgba(255,255,255,0.6);">
   Sailing data provided by <a href="https://www.bcferriesapi.ca" target="_blank" rel="noopener" style="color:rgba(255,255,255,0.8);">bcferriesapi.ca</a>
-  &nbsp;·&nbsp; Version 0.26.4.24.1645
+  &nbsp;·&nbsp; Version 0.26.6.25.0900
 </footer>
 </body>
 </html>
