@@ -154,11 +154,23 @@ Format: `FROMTO` e.g. `HSBLNG` = Horseshoe Bay → Langdale
 - Tiled background: pagewallpaper25.jpg (embedded as base64 data URI)
 - Colour palette: teal/seafoam (matching sliochsoftware.ca style)
 
+### PWA (Progressive Web App)
+- Installable on desktop (Chrome/Edge) and mobile (iOS/Android)
+- `manifest.json`: name, theme colour (#2a7878), `start_url: "/"`, `scope: "/"` — uses `/` not `/bcferries/` because custom domain serves at root
+- `icon.svg`: teal ferry icon with rounded-square background, `purpose: "any maskable"`
+- `sw.js`: service worker
+  - **App shell** (index.html, manifest, icon): network-first → cache fallback (so deploys go live immediately, app works offline)
+  - **API** (bcferriesapi.ca): network-first → last cached sailing data when offline
+  - **Cameras / vessel tracker iframes**: network-only (no caching)
+- SW registered in JS after `init()` on `window load`
+- Apple meta tags added (`apple-mobile-web-app-capable`, `apple-touch-icon`, etc.)
+
 ### Versioning / Cache
 - No-cache meta tags in `<head>` to prevent browser caching
 - Footer shows version in format `0.yy.M.d.HHmm` — update with every commit
-- Current version: `0.26.4.24.1720`
+- Current version: `0.26.6.25.0900`
 - Hard refresh: Ctrl+Shift+R bypasses all caches including GitHub Pages CDN (~10 min TTL)
+- When updating `sw.js` or `manifest.json`, bump `CACHE_NAME` in sw.js (e.g. `bcferries-v2`) to force cache refresh
 
 ### Footer
 - Acknowledges data source: bcferriesapi.ca
@@ -174,9 +186,9 @@ Format: `FROMTO` e.g. `HSBLNG` = Horseshoe Bay → Langdale
 
 ## Development Workflow
 ```bash
-# Edit index.html locally
-# Then deploy:
-git add index.html
+# Edit files locally, then deploy:
+git add index.html          # always
+git add manifest.json sw.js icon.svg   # only if changed
 git commit -m "description of change"
 git push
 # GitHub Pages rebuilds in ~60 seconds
@@ -187,6 +199,9 @@ git push
 ```
 C:\Dev\BCFerries\
 ├── index.html      # Everything — HTML, CSS, JS, background image (base64)
+├── manifest.json   # PWA web app manifest
+├── sw.js           # Service worker (caching / offline)
+├── icon.svg        # PWA app icon (teal ferry, maskable)
 └── CLAUDE.md       # This file
 ```
 
