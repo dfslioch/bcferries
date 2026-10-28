@@ -6,7 +6,7 @@ A single-file static HTML/JS web app that displays BC Ferries sailing schedules 
 ## Repository
 - **GitHub:** https://github.com/dfslioch/bcferries
 - **Live URL:** https://dfslioch.github.io/bcferries/
-- **Local dev folder:** C:\Dev\BCFerries
+- **Local dev folder:** C:\Dev\subdomain_bcferries
 - **Main file:** `index.html` (everything is in one file — HTML, CSS, JS)
 - **Git remote:** `https://dfslioch@github.com/dfslioch/bcferries.git` (username embedded to avoid multi-account prompt)
 
@@ -197,7 +197,7 @@ git push
 
 ## File Structure
 ```
-C:\Dev\BCFerries\
+C:\Dev\subdomain_bcferries\
 ├── index.html      # Everything — HTML, CSS, JS, background image (base64)
 ├── manifest.json   # PWA web app manifest
 ├── sw.js           # Service worker (caching / offline)
